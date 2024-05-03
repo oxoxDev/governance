@@ -59,7 +59,8 @@ async function main() {
     }
   });
 
-  for (let i = 0; i < parsedData.length; i++) {
+  for (const element of parsedData) {
+
     const {
       who,
       pending,
@@ -69,7 +70,7 @@ async function main() {
       unlockDate,
       hasPenalty,
       category,
-    } = parsedData[i];
+    } = element;
 
     await vest.mint(
       who,
