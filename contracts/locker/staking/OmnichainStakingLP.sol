@@ -20,6 +20,8 @@ contract OmnichainStakingLP is OmnichainStakingBase {
     ILPOracle public lpOracle;
     IPythAggregatorV3 public zeroAggregator;
 
+    event LPOracleUpdated(address indexed oldOracle, address indexed newOracle);
+    
     function init(
         address _locker,
         address _zeroToken,
@@ -48,5 +50,12 @@ contract OmnichainStakingLP is OmnichainStakingBase {
         require(zeroPrice > 0 && lpPrice > 0, "!price");
 
         power = ((lpPrice * amount) / uint256(zeroPrice));
+    }
+
+    function setLPOracle(address _newOracle) external onlyOwner {
+        require(_newOracle != address(0), "Invalid oracle address");
+        address oldOracle = address(lpOracle);
+        lpOracle = ILPOracle(_newOracle);
+        emit LPOracleUpdated(oldOracle, _newOracle);
     }
 }
