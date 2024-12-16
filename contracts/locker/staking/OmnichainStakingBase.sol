@@ -212,17 +212,24 @@ abstract contract OmnichainStakingBase is
 
         require(msg.sender == lockedByToken[tokenId], "!tokenId");
         locker.underlying().transferFrom(msg.sender, address(this), newLockAmount);
-        locker.increaseAmount(tokenId, newLockAmount);
 
-        // update voting power
-        _burn(msg.sender, tokenPower[tokenId]);
-        tokenPower[tokenId] = _getTokenPower(locker.balanceOfNFT(tokenId));
-        _mint(msg.sender, tokenPower[tokenId]);
+        increaseLockAmt(tokenId, newLockAmount);
+    }
 
-        // reset all the votes for the user
-        if (votingPowerCombined != IVotingPowerCombined(address(0))) {
-            votingPowerCombined.reset(msg.sender);
-        }
+    /**
+     * @dev claims the reward and re-stake for a specific NFT.
+     * @param tokenId The ID of the NFT for which to update the lock amount.
+     */
+    function reStakeRewards(uint256 tokenId) external nonReentrant updateReward(msg.sender){
+        uint256 reward = rewards[msg.sender];
+        require(reward != 0, "No reward claimed!");
+        require(msg.sender == lockedByToken[tokenId], "!tokenId");
+
+        // transfering all user rewards for re-staking
+        rewards[msg.sender] = 0;
+        locker.increaseAmount(tokenId, reward);
+
+        increaseLockAmt(tokenId, reward);
     }
 
     function transfer(address to, uint256 value) public virtual override returns (bool) {
@@ -402,6 +409,20 @@ abstract contract OmnichainStakingBase is
 
         if (votingPowerCombined != IVotingPowerCombined(address(0))) {
             votingPowerCombined.reset(sender);
+        }
+    }
+
+    function increaseLockAmt(uint256 tokenId, uint256 newLockAmount) internal{
+        locker.increaseAmount(tokenId, newLockAmount);
+
+        // update voting power
+        _burn(msg.sender, tokenPower[tokenId]);
+        tokenPower[tokenId] = _getTokenPower(locker.balanceOfNFT(tokenId));
+        _mint(msg.sender, tokenPower[tokenId]);
+
+        // reset all the votes for the user
+        if (votingPowerCombined != IVotingPowerCombined(address(0))) {
+            votingPowerCombined.reset(msg.sender);
         }
     }
 
